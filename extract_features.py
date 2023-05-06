@@ -17,7 +17,7 @@ def get_features(file_name):
 
 def extract_features():
 
-    # path to dataset containing 8 subdirectories of .ogg files
+    # path to dataset containing 10 subdirectories of .ogg files
     sub_dirs = os.listdir('dataset')
     sub_dirs.sort()
     features_list = []

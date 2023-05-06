@@ -1,6 +1,6 @@
-# script takes a .ogg file as input and converts it into .wav form. This .wav file can be played using MP3 player.
+# script takes a .ogg file as input and converts it into .wav form
 # The waveform is visualized in the form of a plot. 
-# python visualize_data.py -o "dataset/001 - Dog bark/1-30226-A.ogg"
+# python visualize_data.py -o "dataset/001 - Vehicle/10420C_0.ogg"
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,13 +14,13 @@ def visualize_wav(oggfile):
     
     data, samplerate = sf.read(oggfile)
     
-    if not os.path.exists('sample_wav'):
-        os.mkdir('sample_wav')
+    if not os.path.exists('sample'):
+        os.mkdir('sample')
 
-    sf.write('sample_wav/new_file_Fire.wav', data, samplerate)
-    spf = wave.open('sample_wav/new_file_Fire.wav')
+    sf.write('sample/sample_vehicle.wav', data, samplerate)
+    spf = wave.open('sample/sample_vehicle.wav')
     signal = spf.readframes(-1)
-    signal = np.fromstring(signal,'Int16')
+    signal = np.fromstring(signal,np.int16)
 
     if spf.getnchannels() == 2:
         print('just mono files. not stereo')
@@ -31,11 +31,11 @@ def visualize_wav(oggfile):
     plt.figure(1)
     plt.title('Signal Wave Vs Time(in sec)')
     plt.plot(Time, signal)
-    plt.savefig('sample_wav/sample_waveplot_Fire.png', bbox_inches='tight')
+    plt.savefig('sample/sample_vehicle.png', bbox_inches='tight')
     plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o','--ogg_file', help='Relative path to a .ogg file', default = 'dataset/001 - Vehicle/1-10000-A.ogg')
+    parser.add_argument('-o','--ogg_file', help='Relative path to a .ogg file', default = 'dataset/001 - Vehicle/10420C_0.ogg')
     args = parser.parse_args()
     visualize_wav(args.ogg_file)
