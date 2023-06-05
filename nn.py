@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Dense, Dropout, Activation, Flatten, BatchNormalization
 from keras.layers import Conv1D, Conv2D, GlobalAveragePooling1D, MaxPooling1D
 from keras.models import load_model
 import extract_features
@@ -23,28 +23,49 @@ def create_mlp(num_labels):
     return model
 
 def create_cnn(num_labels):
-
     model = Sequential()
-    model.add(Conv1D(64, 3, activation='relu', input_shape=(40, 1)))
+    model.add(Conv1D(32, 2, activation='relu', input_shape=(40, 1)))
+    model.add(BatchNormalization())
+    model.add(Conv1D(32, 2, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling1D(2))
     model.add(Conv1D(64, 3, activation='relu'))
-    model.add(MaxPooling1D(3))
+    model.add(BatchNormalization())
+    model.add(Conv1D(64, 3, activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling1D(2))
     model.add(Conv1D(128, 3, activation='relu'))
+    model.add(BatchNormalization())
     model.add(Conv1D(128, 3, activation='relu'))
+    model.add(BatchNormalization())
     model.add(GlobalAveragePooling1D())
     model.add(Dropout(0.5))
+    #model.add(Flatten())
+    model.add(Dense(256, activation='relu'))
     model.add(Dense(num_labels))
     model.add(Activation('softmax'))
     return model
+
+#def create_cnn(num_labels):
+
+    #model = Sequential()
+    #model.add(Conv1D(64, 3, activation='relu', input_shape=(40, 1)))
+    #model.add(Conv1D(64, 3, activation='relu'))
+    #model.add(MaxPooling1D(3))
+    #model.add(Conv1D(128, 3, activation='relu'))
+    #model.add(Conv1D(128, 3, activation='relu'))
+    #model.add(GlobalAveragePooling1D())
+    #model.add(Dropout(0.5))
+    #model.add(Dense(num_labels))
+    #model.add(Activation('softmax'))
+    #return model
 
 def train(model,X_train, X_test, y_train, y_test,model_file):    
     
     # compile the model 
     model.compile(loss = 'categorical_crossentropy',metrics=['accuracy'],optimizer='adam')
-
     print(model.summary())
-
     print("training for 100 epochs with batch size 32")
-   
     model.fit(X_train,y_train,batch_size= 32, epochs = 100, validation_data=(X_test,y_test))
     
     # save model to disk
@@ -62,6 +83,7 @@ def predict(filename,le,model_file):
 
     model = load_model(model_file)
     prediction_feature = extract_features.get_features(filename)
+    sound_level = extract_features.get_db(filename)
     if model_file == "trained_mlp.h5":
         prediction_feature = np.array([prediction_feature])
     elif model_file == "trained_cnn.h5":    
@@ -93,16 +115,18 @@ def predict(filename,le,model_file):
         sound_name = "Gunshot"
     else: sound_name = ""
 
-    #print("Predicted class : ", np.argmax(predicted_proba))
-    print("Predicted class : ", sound_name)
+    print("Predicted class : ", sound_name, "; Predicted decibels : ",sound_level)
     for i in range(len(predicted_proba)):
-        #category = LabelEncoder().inverse_transform(np.array([i]))
         
-        le.fit(predicted_proba)
+        #category = LabelEncoder().inverse_transform(np.array([i]))
+        #le.fit(predicted_proba)
+        
+        # When building a model
         category = le.inverse_transform(np.array([i]))
+        
         print(category[0], "\t\t : ", format(predicted_proba[i], '.32f') )
         
-    with open("hz.csv", "w", newline="") as file:
+    with open("output.csv", "w", newline="") as file:
         writer=csv.writer(file)
-        writer.writerow(["ID", "SoundID","Sound Classification"])
-        writer.writerow(["", "", sound_name])
+        writer.writerow(["ID", "SoundID","Sound Classification", "Decibels"])
+        writer.writerow(["", "", sound_name, sound_level])
