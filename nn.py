@@ -6,6 +6,8 @@ import extract_features
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import csv
+from keras import backend as K
+from matplotlib import pyplot
 
 def create_mlp(num_labels):
 
@@ -63,25 +65,81 @@ def create_cnn(num_labels):
 def train(model,X_train, X_test, y_train, y_test,model_file):    
     
     # compile the model 
-    model.compile(loss = 'categorical_crossentropy',metrics=['accuracy'],optimizer='adam')
+    model.compile(loss = 'categorical_crossentropy',metrics=['accuracy', f1],optimizer='adam')
     print(model.summary())
     print("training for 100 epochs with batch size 32")
-    model.fit(X_train,y_train,batch_size= 32, epochs = 100, validation_data=(X_test,y_test))
+    history = model.fit(X_train,y_train,batch_size= 32, epochs = 100, validation_data=(X_test,y_test))
     
     # save model to disk
     print("Saving model to disk")
     model.save(model_file)
 
+    # plot
+        
+    # plot accuracy during training
+    pyplot.subplot(221)
+    pyplot.title('Accuracy')
+    pyplot.plot(history.history['accuracy'], label='train')
+    pyplot.plot(history.history['val_accuracy'], label='test')
+    pyplot.legend()
+    #pyplot.show()
+
+    # plot f1 score during training
+    pyplot.subplot(222)
+    pyplot.title('F1 Score')
+    pyplot.plot(history.history['f1'], label='train')
+    pyplot.plot(history.history['val_f1'], label='test')
+    pyplot.legend()
+    #pyplot.show()
+
+    # plot loss during training
+    pyplot.subplot(212)
+    pyplot.title('Loss')
+    pyplot.plot(history.history['loss'], label='train')
+    pyplot.plot(history.history['val_loss'], label='test')
+    pyplot.legend()
+    
+    pyplot.show()
+
 def compute(X_test,y_test,model_file):
 
     # load model from disk
-    loaded_model = load_model(model_file)
+    loaded_model = load_model(model_file, custom_objects={"f1": f1})
     score = loaded_model.evaluate(X_test,y_test)
     return score[0],score[1]*100
 
+
+
+def f1(y_true, y_pred):
+    def recall(y_true, y_pred):
+        # Recall metric.
+        # Only computes a batch-wise average of recall.
+        # Computes the recall, a metric for multi-class classification of how many relevant items are selected.
+
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        recall = true_positives / (possible_positives + K.epsilon())
+        return recall
+
+    def precision(y_true, y_pred):
+        # Precision metric.
+        # Only computes a batch-wise average of precision.
+        # Computes the precision, a metric for multi-class classification of how many selected items are relevant.
+
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        return precision
+    precision = precision(y_true, y_pred)
+    recall = recall(y_true, y_pred)
+    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+
+
+
+
 def predict(filename,le,model_file):
 
-    model = load_model(model_file)
+    model = load_model(model_file, custom_objects={"f1": f1})
     prediction_feature = extract_features.get_features(filename)
     sound_level = extract_features.get_db(filename)
     if model_file == "trained_mlp.h5":
@@ -118,6 +176,7 @@ def predict(filename,le,model_file):
     print("Predicted class : ", sound_name, "; Predicted decibels : ",sound_level)
     for i in range(len(predicted_proba)):
         
+        # When predicting
         #category = LabelEncoder().inverse_transform(np.array([i]))
         #le.fit(predicted_proba)
         

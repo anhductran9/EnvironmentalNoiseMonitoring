@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 import extract_features
 import nn
 import sys
+from matplotlib import pyplot
 
 def get_numpy_array(features_df):
 
@@ -26,35 +27,37 @@ def get_train_test(X,y):
 if __name__ == "__main__":
     
     # extract features
-    #print("Extracting features..")
-    #features_df = extract_features.extract_features()
+    print("Extracting features..")
+    features_df = extract_features.extract_features()
 
-    #if sys.argv[1] == "cnn":
+    if sys.argv[1] == "cnn":
 
         # convert into numpy array
-        #X, y, le = get_numpy_array(features_df)
+        X, y, le = get_numpy_array(features_df)
 
         # split into training and testing data
-        #X_train, X_test, y_train, y_test = get_train_test(X,y)
-        #num_labels = y.shape[1]
+        X_train, X_test, y_train, y_test = get_train_test(X,y)
+        num_labels = y.shape[1]
         
-        #X_train = np.expand_dims(X_train, axis=2)
-        #X_test = np.expand_dims(X_test, axis=2)
+        X_train = np.expand_dims(X_train, axis=2)
+        X_test = np.expand_dims(X_test, axis=2)
         
         # create model architecture
-        #model = nn.create_cnn(num_labels)
+        model = nn.create_cnn(num_labels)
 
         # train model
-        #print("Training..")
-        #nn.train(model,X_train, X_test, y_train, y_test,"trained_cnn.h5")
+        print("Training..")
+        nn.train(model,X_train, X_test, y_train, y_test,"trained_cnn.h5")
 
         # compute test loss and accuracy
-        #test_loss, test_accuracy = nn.compute(X_test,y_test,"trained_cnn.h5")
-        #print("Test loss",test_loss)
-        #print("Test accuracy",test_accuracy)
+        test_loss, test_accuracy = nn.compute(X_test,y_test,"trained_cnn.h5")
+        #test = nn.compute(X_test,y_test,"trained_cnn.h5")
+        print("Test loss", test_loss)
+        print("Test accuracy", test_accuracy)
+        #print(test)
 
         # predicting using trained model with any test file
-        #nn.predict("sample/vehicle_oneminute.ogg",le,"trained_cnn.h5")
+        nn.predict("sample/vehicle_oneminute.ogg",le,"trained_cnn.h5")
         #nn.predict("sample/rain.ogg",le,"trained_cnn.h5")
         #nn.predict("sample/airplane.ogg",le,"trained_cnn.h5")
         #nn.predict("sample/singing.ogg",le,"trained_cnn.h5")
@@ -64,6 +67,7 @@ if __name__ == "__main__":
         #nn.predict("sample/fire.ogg",le,"trained_cnn.h5")
         #nn.predict("sample/couple.ogg",le,"trained_cnn.h5")
         #nn.predict("sample/pistol.ogg",le,"trained_cnn.h5")
+
 
     #elif sys.argv[1] == "mlp":
 
@@ -97,6 +101,6 @@ if __name__ == "__main__":
         #nn.predict("sample/fire.ogg",le,"trained_mlp.h5")
         #nn.predict("sample/couple.ogg",le,"trained_mlp.h5")
         #nn.predict("sample/pistol.ogg",le,"trained_mlp.h5")
-    
-    nn.predict("sample/rainy.ogg",LabelEncoder(),"trained_cnn.h5")
+
+    #nn.predict("sample/rainy.ogg",LabelEncoder(),"trained_cnn.h5")
     #nn.predict("sample/pistol.ogg",LabelEncoder(),"trained_mlp.h5")
